@@ -2,24 +2,23 @@
 
 import { useState } from "react";
 import CompoundInterestChart from "@/components/CompoundInterestChart";
-import { calculateCompoundInterest, CompoundInterestParams } from "@/utils/finance";
-import { Calculator, TrendingUp, Target } from "lucide-react";
+import { CompoundInterestParams, calculateCompoundInterest } from "@/utils/finance";
 
 export default function Home() {
   const [targetAge, setTargetAge] = useState(60);
 
   const [scenarioA, setScenarioA] = useState<CompoundInterestParams>({
-    monthlyInvestment: 1000,
-    annualReturnRate: 1, // ฝากออมทรัพย์
-    startAge: 22,
+    monthlyInvestment: 5000,
+    annualReturnRate: 5,
+    startAge: 25,
     stopInvestmentAge: 60,
     endAge: 60,
   });
 
   const [scenarioB, setScenarioB] = useState<CompoundInterestParams>({
-    monthlyInvestment: 1000,
-    annualReturnRate: 6, // กองทุนรวม
-    startAge: 22,
+    monthlyInvestment: 5000,
+    annualReturnRate: 10,
+    startAge: 25,
     stopInvestmentAge: 60,
     endAge: 60,
   });
@@ -37,182 +36,240 @@ export default function Home() {
     }
   };
 
+  const formatCurrency = (value: number) => {
+    if (value >= 1000000) {
+      return `฿${(value / 1000000).toFixed(1)}M`;
+    }
+    if (value >= 1000) {
+      return `฿${(value / 1000).toFixed(0)}k`;
+    }
+    return `฿${value}`;
+  };
+
+  const calculateScenarioResult = (params: CompoundInterestParams, targetAge: number) => {
+    const results = calculateCompoundInterest({ ...params, endAge: targetAge });
+    const finalYear = results.find(r => r.age === targetAge);
+    const invested = finalYear ? finalYear.totalInvested : 0;
+    const finalValue = finalYear ? finalYear.totalValue : 0;
+
+    // Protect against division by zero
+    const profitPercentage = invested > 0 ? ((finalValue - invested) / invested) * 100 : 0;
+
+    return {
+      finalValue,
+      profitPercentage
+    };
+  };
+
+  const resultA = calculateScenarioResult(scenarioA, targetAge);
+  const resultB = calculateScenarioResult(scenarioB, targetAge);
+
   const scenarios = [
-    { name: "นาย A (ฝากเงิน)", params: scenarioA, color: "#ef4444" }, // Red
-    { name: "นาย B (ลงทุน)", params: scenarioB, color: "#10b981" }, // Green
+    { name: "A", params: scenarioA, color: "var(--color-on-tertiary-container)" }, // #7f82ff
+    { name: "B", params: scenarioB, color: "var(--color-secondary)" }, // #006c49
   ];
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900 pb-20">
-      {/* Header */}
-      <header className="bg-blue-900 text-white p-6 shadow-md">
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <Calculator size={28} />
-          <h1 className="text-2xl font-bold">Money 101: พลังดอกเบี้ยทบต้น</h1>
+    <>
+      {/* TopAppBar */}
+      <header className="fixed top-0 w-full z-50 bg-surface shadow-sm flex items-center justify-between px-container-padding h-16">
+        <div className="flex items-center gap-4">
+          <span className="material-symbols-outlined text-primary">menu</span>
+          <h1 className="font-headline-md text-headline-md-mobile text-primary">Money 101</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-on-surface-variant">account_circle</span>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto p-4 mt-6">
-        {/* Intro */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
-          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-            <TrendingUp className="text-blue-600" />
-            &quot;องศาที่แตกต่าง: ทำไมเวลาและผลตอบแทนถึงสำคัญ?&quot;
-          </h2>
-          <p className="text-gray-600 text-sm leading-relaxed">
-            จำลองสถานการณ์จากหนังสือ Money 101 ลองปรับตัวเลขดูว่า
-            การออมเงินในที่ที่ให้ผลตอบแทนต่างกัน หรือการเริ่มลงทุนช้า/เร็ว
-            ส่งผลต่อเงินเกษียณของคุณอย่างไร
+      <main className="pt-20 pb-28 px-container-padding max-w-lg mx-auto space-y-stack-md">
+        {/* Intro Section */}
+        <section className="space-y-2">
+          <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-primary">พลังดอกเบี้ยทบต้น</h2>
+          <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+            การสร้างความมั่งคั่งไม่ได้ขึ้นอยู่กับจำนวนเงินเพียงอย่างเดียว แต่อยู่ที่ <span className="text-secondary font-bold underline decoration-2 underline-offset-4">ระยะเวลา</span> และ <span className="text-secondary font-bold underline decoration-2 underline-offset-4">อัตราผลตอบแทน</span> ที่สม่ำเสมอ
           </p>
+        </section>
+
+        {/* Chart Area */}
+        <div className="relative w-full aspect-[4/3] bg-surface-container-lowest rounded-[24px] shadow-sm p-stack-md border border-outline-variant flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <span className="font-label-md text-label-md text-outline">แนวโน้มมูลค่าพอร์ต</span>
+            <div className="flex gap-4">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-on-tertiary-container"></div>
+                <span className="text-[10px] font-bold">A</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-secondary"></div>
+                <span className="text-[10px] font-bold">B</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 min-h-[200px]">
+             <CompoundInterestChart scenarios={scenarios} targetAge={targetAge} />
+          </div>
         </div>
 
-        {/* Input Forms */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        {/* Global Input: Target Age */}
+        <div className="bg-surface-container-low p-stack-md rounded-[24px] space-y-stack-sm">
+          <div className="flex justify-between items-center">
+            <label className="font-label-md text-label-md text-primary">ดูผลลัพธ์เมื่อคุณอายุ</label>
+            <span className="font-headline-md text-headline-md text-secondary" id="target-age-val">
+              {targetAge}
+            </span>
+          </div>
+          <input
+            className="w-full h-2 bg-outline-variant rounded-lg appearance-none cursor-pointer accent-secondary"
+            id="target-age"
+            max="80"
+            min="20"
+            type="range"
+            value={targetAge}
+            onChange={(e) => setTargetAge(Number(e.target.value))}
+          />
+        </div>
+
+        {/* Scenarios Section */}
+        <div className="space-y-gutter">
           {/* Scenario A */}
-          <div className="bg-white p-5 rounded-xl shadow-sm border border-red-100 border-t-4 border-t-red-500">
-            <h3 className="font-bold text-red-600 mb-4 text-lg">นาย A</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">เงินลงทุนต่อเดือน (บาท)</label>
+          <div className="bg-surface-container-lowest border border-on-tertiary-container/20 rounded-[24px] p-stack-md shadow-sm space-y-stack-sm transition-all active:scale-[0.98]">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-6 bg-on-tertiary-container rounded-full"></div>
+              <h3 className="font-label-md text-label-md font-bold uppercase tracking-wider text-on-tertiary-container">Scenario A</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-gutter">
+              <div className="space-y-1">
+                <label className="font-label-sm text-label-sm text-outline">ลงทุน/เดือน (฿)</label>
                 <input
+                  className="w-full h-12 rounded-xl bg-surface border-none text-body-md font-bold text-primary focus:ring-2 focus:ring-on-tertiary-container px-3"
                   type="number"
                   value={scenarioA.monthlyInvestment}
                   onChange={(e) => handleScenarioChange('A', 'monthlyInvestment', e.target.value)}
-                  className="w-full p-2 border rounded-md bg-gray-50"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ผลตอบแทนคาดหวัง (% ต่อปี)</label>
+              <div className="space-y-1">
+                <label className="font-label-sm text-label-sm text-outline">ผลตอบแทน (%)</label>
                 <input
+                  className="w-full h-12 rounded-xl bg-surface border-none text-body-md font-bold text-primary focus:ring-2 focus:ring-on-tertiary-container px-3"
                   type="number"
                   value={scenarioA.annualReturnRate}
                   onChange={(e) => handleScenarioChange('A', 'annualReturnRate', e.target.value)}
-                  className="w-full p-2 border rounded-md bg-gray-50"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">อายุที่เริ่ม</label>
-                  <input
-                    type="number"
-                    value={scenarioA.startAge}
-                    onChange={(e) => handleScenarioChange('A', 'startAge', e.target.value)}
-                    className="w-full p-2 border rounded-md bg-gray-50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">อายุที่หยุดลงทุน</label>
-                  <input
-                    type="number"
-                    value={scenarioA.stopInvestmentAge}
-                    onChange={(e) => handleScenarioChange('A', 'stopInvestmentAge', e.target.value)}
-                    className="w-full p-2 border rounded-md bg-gray-50"
-                  />
-                </div>
+              <div className="space-y-1">
+                <label className="font-label-sm text-label-sm text-outline">เริ่มอายุ</label>
+                <input
+                  className="w-full h-12 rounded-xl bg-surface border-none text-body-md font-bold text-primary focus:ring-2 focus:ring-on-tertiary-container px-3"
+                  type="number"
+                  value={scenarioA.startAge}
+                  onChange={(e) => handleScenarioChange('A', 'startAge', e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="font-label-sm text-label-sm text-outline">หยุดออมอายุ</label>
+                <input
+                  className="w-full h-12 rounded-xl bg-surface border-none text-body-md font-bold text-primary focus:ring-2 focus:ring-on-tertiary-container px-3"
+                  type="number"
+                  value={scenarioA.stopInvestmentAge}
+                  onChange={(e) => handleScenarioChange('A', 'stopInvestmentAge', e.target.value)}
+                />
               </div>
             </div>
           </div>
 
           {/* Scenario B */}
-          <div className="bg-white p-5 rounded-xl shadow-sm border border-green-100 border-t-4 border-t-green-500">
-            <h3 className="font-bold text-green-600 mb-4 text-lg">นาย B</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">เงินลงทุนต่อเดือน (บาท)</label>
+          <div className="bg-surface-container-lowest border border-secondary/20 rounded-[24px] p-stack-md shadow-sm space-y-stack-sm transition-all active:scale-[0.98]">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-6 bg-secondary rounded-full"></div>
+              <h3 className="font-label-md text-label-md font-bold uppercase tracking-wider text-secondary">Scenario B</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-gutter">
+              <div className="space-y-1">
+                <label className="font-label-sm text-label-sm text-outline">ลงทุน/เดือน (฿)</label>
                 <input
+                  className="w-full h-12 rounded-xl bg-surface border-none text-body-md font-bold text-primary focus:ring-2 focus:ring-secondary px-3"
                   type="number"
                   value={scenarioB.monthlyInvestment}
                   onChange={(e) => handleScenarioChange('B', 'monthlyInvestment', e.target.value)}
-                  className="w-full p-2 border rounded-md bg-gray-50"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ผลตอบแทนคาดหวัง (% ต่อปี)</label>
+              <div className="space-y-1">
+                <label className="font-label-sm text-label-sm text-outline">ผลตอบแทน (%)</label>
                 <input
+                  className="w-full h-12 rounded-xl bg-surface border-none text-body-md font-bold text-primary focus:ring-2 focus:ring-secondary px-3"
                   type="number"
                   value={scenarioB.annualReturnRate}
                   onChange={(e) => handleScenarioChange('B', 'annualReturnRate', e.target.value)}
-                  className="w-full p-2 border rounded-md bg-gray-50"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">อายุที่เริ่ม</label>
-                  <input
-                    type="number"
-                    value={scenarioB.startAge}
-                    onChange={(e) => handleScenarioChange('B', 'startAge', e.target.value)}
-                    className="w-full p-2 border rounded-md bg-gray-50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">อายุที่หยุดลงทุน</label>
-                  <input
-                    type="number"
-                    value={scenarioB.stopInvestmentAge}
-                    onChange={(e) => handleScenarioChange('B', 'stopInvestmentAge', e.target.value)}
-                    className="w-full p-2 border rounded-md bg-gray-50"
-                  />
-                </div>
+              <div className="space-y-1">
+                <label className="font-label-sm text-label-sm text-outline">เริ่มอายุ</label>
+                <input
+                  className="w-full h-12 rounded-xl bg-surface border-none text-body-md font-bold text-primary focus:ring-2 focus:ring-secondary px-3"
+                  type="number"
+                  value={scenarioB.startAge}
+                  onChange={(e) => handleScenarioChange('B', 'startAge', e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="font-label-sm text-label-sm text-outline">หยุดออมอายุ</label>
+                <input
+                  className="w-full h-12 rounded-xl bg-surface border-none text-body-md font-bold text-primary focus:ring-2 focus:ring-secondary px-3"
+                  type="number"
+                  value={scenarioB.stopInvestmentAge}
+                  onChange={(e) => handleScenarioChange('B', 'stopInvestmentAge', e.target.value)}
+                />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Target Age Setting */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Target className="text-blue-500" />
-            <span className="font-medium">อายุเป้าหมาย (ปีที่จะดูผลลัพธ์)</span>
+        {/* Summary Comparison */}
+        <div className="flex gap-gutter">
+          {/* Summary A */}
+          <div className="flex-1 bg-surface-container-highest/50 rounded-[24px] p-gutter border border-outline-variant/50 space-y-2">
+            <span className="font-label-sm text-label-sm text-on-tertiary-container">Scenario A</span>
+            <div className="space-y-0">
+              <p className="font-label-sm text-label-sm text-outline">มูลค่าสุทธิ</p>
+              <p className="font-headline-md text-headline-md-mobile text-primary">{formatCurrency(resultA.finalValue)}</p>
+            </div>
+            <div className="pt-2 border-t border-outline-variant flex justify-between items-center">
+              <span className="text-[10px] text-outline">ดอกเบี้ย</span>
+              <span className="text-[10px] font-bold text-on-tertiary-container">+{resultA.profitPercentage.toLocaleString(undefined, {maximumFractionDigits: 0})}%</span>
+            </div>
           </div>
-          <input
-            type="number"
-            value={targetAge}
-            onChange={(e) => setTargetAge(Number(e.target.value))}
-            className="w-24 p-2 border rounded-md font-bold text-center bg-blue-50"
-          />
-        </div>
 
-        {/* Chart Section */}
-        <div className="bg-white p-2 md:p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
-          <h3 className="font-bold text-center mb-6 text-gray-800">กราฟเปรียบเทียบความมั่งคั่ง</h3>
-          <CompoundInterestChart scenarios={scenarios} targetAge={targetAge} />
-        </div>
-
-        {/* Summary Section */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
-          <h3 className="font-bold text-lg mb-4 text-center text-gray-800">สรุปผลเมื่ออายุ {targetAge} ปี</h3>
-          <div className="grid md:grid-cols-2 gap-6">
-            {scenarios.map((scenario) => {
-              const results = calculateCompoundInterest({ ...scenario.params, endAge: targetAge });
-              const finalYear = results.find(r => r.age === targetAge);
-              const invested = finalYear ? finalYear.totalInvested : 0;
-              const finalValue = finalYear ? finalYear.totalValue : 0;
-              const profit = finalValue - invested;
-
-              return (
-                <div key={scenario.name} className={`p-4 rounded-lg border-2`} style={{ borderColor: scenario.color }}>
-                  <h4 className="font-bold text-lg mb-3" style={{ color: scenario.color }}>{scenario.name}</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">เงินต้นทั้งหมด:</span>
-                      <span className="font-medium">฿{invested.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">ดอกเบี้ย/ผลตอบแทน:</span>
-                      <span className="font-medium text-green-600">+฿{profit.toLocaleString()}</span>
-                    </div>
-                    <div className="pt-2 border-t mt-2 flex justify-between font-bold text-lg">
-                      <span>มูลค่ารวมสุทธิ:</span>
-                      <span>฿{finalValue.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          {/* Summary B */}
+          <div className="flex-1 bg-secondary-container/10 rounded-[24px] p-gutter border border-secondary/20 space-y-2">
+            <span className="font-label-sm text-label-sm text-secondary">Scenario B</span>
+            <div className="space-y-0">
+              <p className="font-label-sm text-label-sm text-outline">มูลค่าสุทธิ</p>
+              <p className="font-headline-md text-headline-md-mobile text-primary">{formatCurrency(resultB.finalValue)}</p>
+            </div>
+            <div className="pt-2 border-t border-outline-variant flex justify-between items-center">
+              <span className="text-[10px] text-outline">ดอกเบี้ย</span>
+              <span className="text-[10px] font-bold text-secondary">+{resultB.profitPercentage.toLocaleString(undefined, {maximumFractionDigits: 0})}%</span>
+            </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+
+      {/* BottomNavBar */}
+      <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center h-20 pb-safe px-4 bg-surface-container-lowest shadow-[0_-2px_10px_rgba(30,41,59,0.05)] rounded-t-xl z-50">
+        <div className="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-5 py-1 transition-transform duration-150 active:scale-95">
+          <span className="material-symbols-outlined">compare_arrows</span>
+          <span className="font-label-sm text-label-sm">Comparator</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:text-primary transition-transform duration-150 active:scale-95">
+          <span className="material-symbols-outlined">trending_up</span>
+          <span className="font-label-sm text-label-sm">Insights</span>
+        </div>
+        <div className="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:text-primary transition-transform duration-150 active:scale-95">
+          <span className="material-symbols-outlined">school</span>
+          <span className="font-label-sm text-label-sm">Learn</span>
+        </div>
+      </nav>
+    </>
   );
 }

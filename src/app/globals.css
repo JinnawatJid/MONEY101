@@ -1,24 +1,97 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+
+  --color-on-tertiary-container: #7f82ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-bright: #f7f9fb;
+  --color-on-error: #ffffff;
+  --color-surface-container-low: #f2f4f6;
+  --color-inverse-primary: #bcc7de;
+  --color-surface-container-high: #e6e8ea;
+  --color-tertiary-container: #0d0093;
+  --color-on-background: #191c1e;
+  --color-primary-fixed-dim: #bcc7de;
+  --color-error-container: #ffdad6;
+  --color-on-primary-fixed-variant: #3c475a;
+  --color-on-error-container: #93000a;
+  --color-surface-container-highest: #e0e3e5;
+  --color-on-primary-container: #8590a6;
+  --color-tertiary-fixed-dim: #c0c1ff;
+  --color-tertiary-fixed: #e1e0ff;
+  --color-on-primary: #ffffff;
+  --color-inverse-on-surface: #eff1f3;
+  --color-error: #ba1a1a;
+  --color-primary: #091426;
+  --color-on-surface-variant: #45474c;
+  --color-on-secondary-fixed-variant: #005236;
+  --color-on-secondary-container: #00714d;
+  --color-outline-variant: #c5c6cd;
+  --color-primary-fixed: #d8e3fb;
+  --color-outline: #75777d;
+  --color-on-tertiary-fixed: #07006c;
+  --color-surface-tint: #545f73;
+  --color-surface: #f7f9fb;
+  --color-inverse-surface: #2d3133;
+  --color-on-surface: #191c1e;
+  --color-primary-container: #1e293b;
+  --color-secondary-fixed-dim: #4edea3;
+  --color-on-secondary-fixed: #002113;
+  --color-secondary-fixed: #6ffbbe;
+  --color-secondary-container: #6cf8bb;
+  --color-secondary: #006c49;
+  --color-on-secondary: #ffffff;
+  --color-on-tertiary: #ffffff;
+  --color-on-primary-fixed: #111c2d;
+  --color-surface-variant: #e0e3e5;
+  --color-background: #f7f9fb;
+  --color-tertiary: #040057;
+  --color-surface-container: #eceef0;
+  --color-on-tertiary-fixed-variant: #2f2ebe;
+  --color-surface-dim: #d8dadc;
+
+  --spacing-stack-sm: 12px;
+  --spacing-stack-md: 24px;
+  --spacing-stack-lg: 40px;
+  --spacing-base: 8px;
+  --spacing-gutter: 16px;
+  --spacing-container-padding: 24px;
+
+  /* Since v4 handles fonts via standard font-size, we will map some classes in utilities */
+}
+
+@layer utilities {
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Typography mappings from the HTML */
+  .font-headline-lg { font-size: 32px; line-height: 40px; letter-spacing: -0.02em; font-weight: 700; }
+  .font-body-md { font-size: 16px; line-height: 24px; font-weight: 400; }
+  .font-headline-md { font-size: 24px; line-height: 32px; font-weight: 600; }
+  .font-label-md { font-size: 14px; line-height: 20px; letter-spacing: 0.01em; font-weight: 500; }
+  .font-body-lg { font-size: 18px; line-height: 28px; font-weight: 400; }
+  .font-label-sm { font-size: 12px; line-height: 16px; font-weight: 600; }
+  .font-headline-lg-mobile { font-size: 24px; line-height: 32px; letter-spacing: -0.01em; font-weight: 700; }
+  .font-headline-xl { font-size: 48px; line-height: 56px; letter-spacing: -0.02em; font-weight: 700; }
+
+  .text-headline-lg { font-size: 32px; line-height: 40px; letter-spacing: -0.02em; font-weight: 700; }
+  .text-body-md { font-size: 16px; line-height: 24px; font-weight: 400; }
+  .text-headline-md { font-size: 24px; line-height: 32px; font-weight: 600; }
+  .text-label-md { font-size: 14px; line-height: 20px; letter-spacing: 0.01em; font-weight: 500; }
+  .text-body-lg { font-size: 18px; line-height: 28px; font-weight: 400; }
+  .text-label-sm { font-size: 12px; line-height: 16px; font-weight: 600; }
+  .text-headline-lg-mobile { font-size: 24px; line-height: 32px; letter-spacing: -0.01em; font-weight: 700; }
+  .text-headline-md-mobile { font-size: 24px; line-height: 32px; font-weight: 600; }
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #ffffff; /* Keep it light for now to match UI design */
-    --foreground: #171717;
-  }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-background);
 }

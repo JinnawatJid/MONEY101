@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { calculateCompoundInterest, CompoundInterestParams } from "@/utils/finance";
 
 interface Scenario {
@@ -18,7 +18,7 @@ interface Props {
 const CustomTooltip = ({ active, payload, label }: { active?: boolean, payload?: Array<Record<string, unknown>>, label?: string }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-4 border rounded shadow-lg text-sm text-gray-800">
+      <div className="bg-white p-3 border rounded shadow-md text-sm text-gray-800 z-50">
         <p className="font-bold mb-2">อายุ: {label} ปี</p>
         {payload.map((entry: Record<string, unknown>, index: number) => {
           const dataKey = String(entry.dataKey || "");
@@ -47,17 +47,27 @@ export default function CompoundInterestChart({ scenarios, targetAge }: Props) {
   const chartData = useMemo(() => {
     if (scenarios.length === 0) return [];
 
-    // Find the absolute minimum starting age across all scenarios
     const minAge = Math.min(...scenarios.map(s => s.params.startAge));
 
-    // Generate individual results
+    // To mimic the design, we don't want to show every single year if the range is large,
+    // but a bar chart looks best with discrete points. Let's sample 4 key points.
+    const start = minAge;
+    const end = targetAge;
+    const interval = Math.floor((end - start) / 3);
+
+    // Fallback to yearly if interval is 0
+    const pointsOfInterest = interval > 0 ? [
+      start,
+      start + interval,
+      start + interval * 2,
+      end
+    ] : [start, end];
+
     const results = scenarios.map(s => {
-      // Create a padded array of results starting from minAge
       const calculated = calculateCompoundInterest({
         ...s.params,
-        endAge: targetAge // Force end age to target
+        endAge: targetAge
       });
-
       return {
         name: s.name,
         color: s.color,
@@ -65,14 +75,13 @@ export default function CompoundInterestChart({ scenarios, targetAge }: Props) {
       };
     });
 
-    // Merge into Recharts format
     const mergedData = [];
-    for (let age = minAge; age <= targetAge; age++) {
-      const dataPoint: Record<string, unknown> = { age };
+    for (const age of pointsOfInterest) {
+      if (age > targetAge) continue; // safety check
+      const dataPoint: Record<string, unknown> = { age: `${age} ปี` };
 
       results.forEach(scenario => {
         const matchingYear = scenario.data.find(d => d.age === age);
-        // If the scenario hasn't started yet, value is 0
         dataPoint[`${scenario.name}Value`] = matchingYear ? matchingYear.totalValue : 0;
         dataPoint[`${scenario.name}Invested`] = matchingYear ? matchingYear.totalInvested : 0;
       });
@@ -83,50 +92,33 @@ export default function CompoundInterestChart({ scenarios, targetAge }: Props) {
     return mergedData;
   }, [scenarios, targetAge]);
 
-  const formatCurrency = (value: number) => {
-    if (value >= 1000000) {
-      return `฿${(value / 1000000).toFixed(1)}M`;
-    }
-    if (value >= 1000) {
-      return `฿${(value / 1000).toFixed(0)}k`;
-    }
-    return `฿${value}`;
-  };
-
   return (
-    <div className="w-full h-80 md:h-96">
+    <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart
+        <BarChart
           data={chartData}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
+          barGap={2}
+          barCategoryGap={20}
         >
-          <CartesianGrid strokeDasharray="3 3" opacity={0.5} />
+          <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
           <XAxis
             dataKey="age"
-            tick={{ fontSize: 12 }}
-            label={{ value: 'อายุ (ปี)', position: 'insideBottomRight', offset: -10 }}
+            tick={{ fontSize: 10, fill: '#75777d' }}
+            axisLine={false}
+            tickLine={false}
           />
-          <YAxis
-            tickFormatter={formatCurrency}
-            tick={{ fontSize: 12 }}
-            width={80}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ paddingTop: '20px' }}/>
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
 
           {scenarios.map((scenario) => (
-            <Line
+            <Bar
               key={scenario.name}
-              type="monotone"
               dataKey={`${scenario.name}Value`}
-              name={`${scenario.name} (มูลค่ารวม)`}
-              stroke={scenario.color}
-              strokeWidth={3}
-              dot={false}
-              activeDot={{ r: 8 }}
+              fill={scenario.color}
+              radius={[4, 4, 0, 0]}
             />
           ))}
-        </LineChart>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
